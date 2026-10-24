@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Automatic AS-unit Parser — Workshop Skeleton</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, sans-serif; color: #153245; background: #f5f8fa; }
+    body { margin: 0; }
+    main { max-width: 760px; margin: 28px auto; padding: 0 18px 42px; }
+    h1 { margin-bottom: 4px; font-size: 1.6rem; }
+    .note { color: #526979; margin-top: 0; }
+    section { margin-top: 18px; padding: 20px; border: 1px solid #d5e1e8; background: white; border-radius: 12px; }
+    h2 { font-size: 1rem; margin: 0 0 14px; }
+    .action { background: #176287; border: 0; border-radius: 7px; color: white; padding: 10px 16px; cursor: pointer; }
+    .action:disabled { background: #a5b9c5; cursor: not-allowed; }
+    input { display: block; margin: 0 0 14px; max-width: 100%; }
+    .output { border: 1px solid #d5e1e8; background: #f8fbfd; border-radius: 7px; padding: 12px; min-height: 40px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    label { font-weight: 600; display: block; margin: 12px 0 6px; }
+    textarea { box-sizing: border-box; width: 100%; min-height: 85px; border: 1px solid #d5e1e8; border-radius: 7px; padding: 10px; }
+    .hint { font-size: .86rem; color: #627b8b; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Automatic AS-unit Parser</h1>
+    <p class="note">Workshop skeleton — no transcription, prosody extraction, or AS-unit prediction yet.</p>
+
+    <section aria-labelledby="upload-title">
+      <h2 id="upload-title">1. Upload Audio</h2>
+      <form id="analysis-form">
+        <label for="audio">Choose a speech recording (WAV or MP3)</label>
+        <input type="file" id="audio" name="audio" accept=".wav,.mp3,audio/wav,audio/mpeg" required>
+        <button class="action" type="submit">Start Analysis</button>
+      </form>
+      <p id="status" class="hint" role="status">Choose a file to display the placeholder result.</p>
+    </section>
+
+    <section aria-labelledby="annotation-title">
+      <h2 id="annotation-title">2. Transcript &amp; AS-unit Annotation</h2>
+      <label>Transcript</label>
+      <div id="transcript" class="output">Placeholder result will appear here.</div>
+      <label>Prosodic features</label>
+      <div id="prosody" class="output">Placeholder result will appear here.</div>
+      <label>Suggested AS-unit boundaries</label>
+      <div id="as-units" class="output">Placeholder result will appear here.</div>
+      <label for="review">Human review / correction (future feature)</label>
+      <textarea id="review" disabled placeholder="Review and correction are not implemented in the skeleton."></textarea>
+    </section>
+
+    <section aria-labelledby="save-title">
+      <h2 id="save-title">3. Save Result</h2>
+      <button class="action" type="button" disabled>Download (future feature)</button>
+      <p class="hint">Nothing is saved to a database or to disk by this skeleton.</p>
+    </section>
+  </main>
+  <script>
+    const form = document.getElementById('analysis-form');
+    const status = document.getElementById('status');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      status.textContent = 'Requesting placeholder result…';
+      try {
+        const response = await fetch('/analyze', { method: 'POST', body: new FormData(form) });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+        document.getElementById('transcript').textContent = result.transcript;
+        document.getElementById('prosody').textContent = result.prosodic_features;
+        document.getElementById('as-units').textContent = result.as_unit_annotation;
+        status.textContent = 'Placeholder response received. No audio was analyzed.';
+      } catch (error) {
+        status.textContent = `Unable to display placeholder response: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
