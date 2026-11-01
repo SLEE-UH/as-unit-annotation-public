@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Automatic AS-unit Parser — Workshop Skeleton</title>
+  <title>Automatic AS-unit Parser</title>
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, sans-serif; color: #153245; background: #f5f8fa; }
     body { margin: 0; }
@@ -24,7 +24,31 @@
 <body>
   <main>
     <h1>Automatic AS-unit Parser</h1>
-    <p class="note">Workshop skeleton — no transcription, prosody extraction, or AS-unit prediction yet.</p>
+    <p class="note">AI suggestions from synthetic text. Audio analysis remains a placeholder.</p>
+
+    <section aria-labelledby="text-title">
+      <h2 id="text-title">AI AS-unit Suggestions from Text</h2>
+      <p class="hint">Synthetic data only. Do not submit personal information, participant data, or private research material. Text and optional cues are sent to the configured AI provider for this request; this app does not save them.</p>
+      <form id="text-form">
+        <label for="text-transcript">Synthetic English transcript (up to 5,000 characters)</label>
+        <textarea id="text-transcript" name="transcript" required maxlength="10000"></textarea>
+        <label for="text-cues">Optional manually supplied prosodic cues (up to 5,000 characters)</label>
+        <textarea id="text-cues" name="prosodic_cues" maxlength="10000" placeholder="Leave blank if no cues are available."></textarea>
+        <button class="action" type="submit">Suggest AS-units</button>
+      </form>
+      <p id="text-status" class="hint" role="status">Enter synthetic text to request suggestions.</p>
+      <p id="text-prosody" class="hint"></p>
+      <label for="text-segments">Original AI segmentation — provisional suggestions</label>
+      <div id="text-segments" class="output"></div>
+      <p id="position-note" class="hint">UI character positions only; not research word-level boundary positions.</p>
+      <p class="hint">Positions count Unicode code points from zero, immediately after each original AI segment. The final text end is omitted.</p>
+      <ol id="boundary-list" aria-label="Original AI boundary positions"></ol>
+      <label for="text-review">Human review / correction (local only)</label>
+      <textarea id="text-review" disabled></textarea>
+      <p id="review-status" class="hint" role="status"></p>
+      <p id="edit-note" class="hint">Original AI boundary positions remain unchanged after edits; they are not recalculated.</p>
+      <p class="hint">No edits are saved or downloaded. The AI suggestions are not validated research annotations.</p>
+    </section>
 
     <section aria-labelledby="upload-title">
       <h2 id="upload-title">1. Upload Audio</h2>
@@ -51,7 +75,7 @@
     <section aria-labelledby="save-title">
       <h2 id="save-title">3. Save Result</h2>
       <button class="action" type="button" disabled>Download (future feature)</button>
-      <p class="hint">Nothing is saved to a database or to disk by this skeleton.</p>
+      <p class="hint">Nothing is saved to a database or to disk by this application.</p>
     </section>
   </main>
   <script>
@@ -70,6 +94,86 @@
         status.textContent = 'Placeholder response received. No audio was analyzed.';
       } catch (error) {
         status.textContent = `Unable to display placeholder response: ${error.message}`;
+      }
+    });
+
+    const textForm = document.getElementById('text-form');
+    const textInput = document.getElementById('text-transcript');
+    const cuesInput = document.getElementById('text-cues');
+    const textStatus = document.getElementById('text-status');
+    const textButton = textForm.querySelector('button');
+    const segmentsOutput = document.getElementById('text-segments');
+    const boundaryList = document.getElementById('boundary-list');
+    const review = document.getElementById('text-review');
+    const reviewStatus = document.getElementById('review-status');
+    const prosodyStatus = document.getElementById('text-prosody');
+    function validateTextInputs() {
+      textInput.setCustomValidity(!textInput.value.trim()
+        ? 'Enter a nonblank synthetic transcript.'
+        : Array.from(textInput.value).length > 5000 ? 'Use at most 5,000 characters.' : '');
+      cuesInput.setCustomValidity(Array.from(cuesInput.value).length > 5000
+        ? 'Use at most 5,000 characters.' : '');
+    }
+    textInput.addEventListener('input', validateTextInputs);
+    cuesInput.addEventListener('input', validateTextInputs);
+    review.addEventListener('input', () => {
+      reviewStatus.textContent = 'Edited locally. Original AI boundary positions are unchanged.';
+    });
+    textForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      validateTextInputs();
+      if (!textForm.reportValidity()) return;
+      textButton.disabled = true;
+      textStatus.textContent = 'Requesting AI suggestions…';
+      segmentsOutput.textContent = '';
+      boundaryList.replaceChildren();
+      prosodyStatus.textContent = '';
+      review.value = '';
+      review.disabled = true;
+      reviewStatus.textContent = '';
+      try {
+        const response = await fetch('/analyze-text', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({transcript: textInput.value,
+            prosodic_cues: cuesInput.value.trim() ? cuesInput.value : null})
+        });
+        if (!response.ok) {
+          const messages = {
+            422: 'Check the transcript and cue length limits.',
+            503: 'Text analysis is not configured on the server.',
+            504: 'Text analysis timed out. Please try again.'
+          };
+          throw new Error(messages[response.status] || 'Text analysis is temporarily unavailable.');
+        }
+        const result = await response.json();
+        const segmented = result.segments.join(' | ');
+        segmentsOutput.textContent = segmented;
+        review.value = segmented;
+        review.disabled = false;
+        reviewStatus.textContent = 'Original AI suggestion. You may edit locally.';
+        prosodyStatus.textContent = result.prosody_status === 'not_supplied'
+          ? 'Prosodic cues not supplied. Suggestions use text alone; no acoustic evidence was inferred.'
+          : 'Suggestions use the manually supplied prosodic cues; no additional acoustic evidence was inferred.';
+        const characters = Array.from(result.transcript);
+        result.boundary_positions.forEach((position) => {
+          const item = document.createElement('li');
+          const before = characters.slice(Math.max(0, position - 16), position).join('');
+          const after = characters.slice(position, position + 16).join('');
+          item.textContent = `${position}: ${before} | ${after}`;
+          boundaryList.appendChild(item);
+        });
+        if (!result.boundary_positions.length) {
+          const item = document.createElement('li');
+          item.textContent = 'No internal boundaries suggested.';
+          boundaryList.appendChild(item);
+        }
+        textStatus.textContent = 'AI suggestions received. Review before use.';
+      } catch (error) {
+        textStatus.textContent = error instanceof TypeError
+          ? 'Unable to reach text analysis. Please try again.'
+          : error.message;
+      } finally {
+        textButton.disabled = false;
       }
     });
   </script>

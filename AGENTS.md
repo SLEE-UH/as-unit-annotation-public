@@ -5,9 +5,9 @@ This project is an Automatic AS-unit Annotation Application for linguists and sp
 ## Layout
 - `app/main.py`: FastAPI routes, page delivery, request/response handling. Keep business rules out of this file.
 - `app/page.html`: UI modeled on the upload, transcript/AS-unit review, and result download areas in the proposal.
-- `app/agent.py`: future Pydantic AI model and structured output definitions; no live model calls in the skeleton.
-- `app/rules.py`: plain Python rules, without FastAPI or LLM imports.
-- `tests/`: tests for the skeleton and later rules.
+- `app/agent.py`: text request/response schemas, server-only model configuration, structured AI suggestions, bounded validation retries and safe failures.
+- `app/rules.py`: plain Python rules, exact segment reconstruction and Unicode UI boundary offsets, without FastAPI or LLM imports.
+- `tests/`: preserved skeleton tests, synthetic rule/API/agent tests, and `browser_text_review.py` for a mocked Chromium review check. `conftest.py` blocks real model requests.
 - `.agents/skills/`: pinned upstream Superpowers skills; a workshop custom skill will be separate work.
 - Split modules by responsibility when necessary, and update this layout to describe the resulting structure.
 
@@ -20,7 +20,7 @@ This project is an Automatic AS-unit Annotation Application for linguists and sp
 
 - Superpowers v7.0.1 is installed in `.agents/skills/`; provenance and license are recorded there. Load `using-superpowers` when starting work, then relevant workflow skills.
 - Use the existing isolated cloud checkout; do not create a worktree unless explicitly requested. Explicit user permissions and privacy requirements take precedence over skill defaults.
-- Installation does not authorize starting the feature or creating the workshop custom skill.
+- The text-suggestions design and implementation plan are approved; the workshop custom skill remains separate work. No commit or publication is authorized by feature implementation approval.
 
 ## Privacy
 
@@ -38,9 +38,11 @@ uv run pytest
 ```
 
 ## Rules
-- Workshop skeleton first: page/form/endpoint and a fixed placeholder response only. No transcription, audio analysis, LLM calls, persistent storage, or account features yet.
+- Current approved scope: synthetic transcript and optional manual prosodic cues → configured AI AS-unit suggestions → browser-local human review. Preserve the existing audio upload placeholder. No transcription, audio analysis, RAG, database, model training, persistent storage, or account features.
+- Original character offsets are Unicode UI positions only, not research word-level boundary measures. Review edits never recalculate original AI positions; label this clearly. Never invent missing prosodic evidence.
+- Real AI calls require explicit authorization for a live demonstration; automated tests always block real model requests and use mocks. Do not log or persist input text, cues, outputs, credentials, or raw provider errors.
 - Tests must not make real model requests or incur API charges. Later use Pydantic AI `TestModel` with `override_allow_model_requests(False)` where relevant.
-- Read `LLM_API_TOKEN` and `LLM_API_GATEWAY` only from the environment when needed. Never put secrets in source files or commit `.env`.
+- Read `LLM_API_TOKEN`, `LLM_API_GATEWAY`, and `LLM_MODEL` only from the environment when needed. Never put secrets in source files or commit `.env`.
 - Do not use actual human-participant research recordings. Project audio must be self-recorded and nonsensitive as the proposal specifies.
 - Do not store original uploaded audio as a persistent record; the proposal limits retained records to transcript, prosody and annotations.
 - Run `uv run ruff check`, `uv run mypy`, and `uv run pytest` after changes and report actual outcomes. Do not report success if any check failed.
