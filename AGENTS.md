@@ -22,6 +22,11 @@ This project is an Automatic AS-unit Annotation Application for linguists and sp
 - Use the existing isolated cloud checkout; do not create a worktree unless explicitly requested. Explicit user permissions and privacy requirements take precedence over skill defaults.
 - Installation does not authorize starting the feature or creating the workshop custom skill.
 
+## PR diagrams
+
+- When preparing or reviewing a PR, or explaining its changed feature flow, automatically load `.agents/skills/pr-diagram/SKILL.md` without requiring the user to name it. Ground the small Mermaid diagram in the PR diff and head code, not only the current checkout or PR description.
+- Skill use produces a read-only response; it does not authorize posting, editing, committing, pushing, or creating a PR.
+
 ## Privacy
 
 - Use only public repository content and synthetic test data. Never add real participant recordings, transcripts, annotations, identifying metadata, private datasets, personal identifying information, personal email addresses, or credentials. Preserve existing anonymization.
