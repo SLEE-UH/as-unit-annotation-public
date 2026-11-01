@@ -9,3 +9,9 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# Local environment variants and Superpowers scratch data
+.env.*
+*.env
+*.env.*
+.superpowers/

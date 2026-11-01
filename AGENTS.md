@@ -8,6 +8,26 @@ This project is an Automatic AS-unit Annotation Application for linguists and sp
 - `app/agent.py`: future Pydantic AI model and structured output definitions; no live model calls in the skeleton.
 - `app/rules.py`: plain Python rules, without FastAPI or LLM imports.
 - `tests/`: tests for the skeleton and later rules.
+- `.agents/skills/`: pinned upstream Superpowers skills; a workshop custom skill will be separate work.
+- Split modules by responsibility when necessary, and update this layout to describe the resulting structure.
+
+## Spec
+
+- Treat `docs/proposal.md` as the authoritative specification. Keep its appropriate existing sections aligned with approved design decisions; do not append dated change logs.
+- Identify conflicts between the proposal, approved design, code, and instructions before building; resolve scope with the user before dependent implementation.
+
+## Superpowers
+
+- Superpowers v7.0.1 is installed in `.agents/skills/`; provenance and license are recorded there. Load `using-superpowers` when starting work, then relevant workflow skills.
+- Use the existing isolated cloud checkout; do not create a worktree unless explicitly requested. Explicit user permissions and privacy requirements take precedence over skill defaults.
+- Installation does not authorize starting the feature or creating the workshop custom skill.
+
+## Privacy
+
+- Use only public repository content and synthetic test data. Never add real participant recordings, transcripts, annotations, identifying metadata, private datasets, personal identifying information, personal email addresses, or credentials. Preserve existing anonymization.
+- Before every commit, verify both effective author and committer use the verified account GitHub no-reply identity; check environment overrides without displaying values. Preserve existing history.
+- Inspect proposed code, documentation, configuration, generated files, logs, and Git metadata for privacy risks. Report only affected files and issue status, never sensitive values.
+- Commit only when explicitly authorized. Push, PR creation, merges, and GitHub Actions changes require explicit user approval; never merge automatically.
 
 ## Commands
 ```bash
